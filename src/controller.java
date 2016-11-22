@@ -1,38 +1,23 @@
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-
-import org.hsqldb.Statement;
 
 public class controller {
 	static void start() throws IOException, InterruptedException{
 		boolean con = model.connect_database();
 		
 		if(con){
-			if(model.init_database())	
+			if(model.init_database())
+				view.clear_console();
 				Thread.sleep(1000);
-				view.print_out("Wczytano baze danych\n");		
+				view.print_out("Wczytano baze danych\n");
 		}
-		
-		view.print_menu();
-		int i = model.read_choice();
-		if(choice_check(i)){
-			execute_choice(i);
-		}
-		else
-		{
-			Thread.sleep(1000);
-			menu();
-		}
+		menu();
 	}
 	
 	static void menu() throws IOException, InterruptedException{
 		view.print_menu();
 		int i = model.read_choice();
 		if(choice_check(i)){
+			view.clear_console();
 			execute_choice(i);
 		}
 		else
@@ -47,7 +32,26 @@ public class controller {
 		else return true;
 	}
 	
-	static void execute_choice(int i){
-		
+	static void execute_choice(int i) throws IOException, InterruptedException{
+		/*
+		1. Wyswietl tabele
+		2. Dodaj dane
+		3. Zmodyfikuj dane
+		4. Usun dane
+		 */
+		if(i==1){
+			view.print_tables();
+			int x = model.ask_table();
+			model.print_Table(x);
+		}
+		else if(i==2){
+			view.print_tables();
+		}
+		else if(i==3){
+			view.print_tables();
+		}
+		else if(i==4){
+			view.print_tables();
+		}
 	}
 }
