@@ -3,12 +3,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 public class model {
 	static java.sql.Statement stmt = null;
 	
-	public static boolean connect_database(){
+	static boolean connect_database(){
 		final String DRIVER = "org.hsqldb.jdbcDriver";
 	    final String DB_URL = "jdbc:hsqldb:file:mydb;ifexists=false;hsqldb.lock_file=false";
 		
@@ -37,6 +39,7 @@ public class model {
 		}      
 	    return true;
 	}
+	
 	static boolean init_database(){
 		view.print_out("Inicjacja danych...\n");
 		
@@ -101,9 +104,10 @@ public class model {
 			    }
 			    return true;
 	}
+	
 	static int read_choice() throws IOException{
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		view.print_out("Wybierz dzialanie: ");
+		view.print_out("Twoj wybor: ");
         try{
             int i = Integer.parseInt(br.readLine());
             return i;
@@ -111,6 +115,87 @@ public class model {
             System.err.println("Nieprawidlowy wybor!");
             return 0;
         }
+	}
+	
+	static int ask_table() throws IOException, InterruptedException{
+		view.print_out("Twoj wybor: ");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        try{
+            int i = Integer.parseInt(br.readLine());
+            if(i>=1 && i <=4)
+            	return i;
+            else{
+            	view.print_tables();
+            	return ask_table();
+            }
+            	
+        }catch(NumberFormatException nfe){
+            //System.err.println("Nieprawidlowy wybor!");
+            //Thread.sleep(1000);
+            view.print_tables();
+            return ask_table();
+        }
+	}
+	
+	public static int get_table_rows(String name){
+		String cmd = "SELECT Count(*) FROM "+name;
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			result.next();
+			return result.getInt(1);
+	    } catch (SQLException e){
+	    	System.err.println("Blad: "+cmd);
+			e.printStackTrace();
+			return 0;
+		}
+	}
+	
+	static void print_Table(int x) throws IOException, InterruptedException{
+		String c = "";
+		if(x==1){
+			c="Interwencja";
+		}
+		else if(x==2){
+			c="Pracownik";
+		}
+		else if(x==3){
+			c="Pojazd";
+		}
+		else if(x==4){
+			view.clear_console();
+			controller.menu();
+		}
+		
+		
+		String cmd = "SELECT * FROM "+c;
+		int i = 1;
+		int rows = get_table_rows(c);
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			ResultSetMetaData rsmd = result.getMetaData();
+			int numberOfColumns = rsmd.getColumnCount();
+			//System.out.println("ROWS: "+rows+" Columns: "+numberOfColumns);
+			String[][] data = new String[rows+2][numberOfColumns+1];
+			data[0][0] = Integer.toString(rows);
+			data[0][1] = Integer.toString(numberOfColumns);			
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				//System.out.print("Dane: ");
+				for(int j=1;j<=numberOfColumns;j++){
+					data[i][j] = result.getString(j);
+					System.out.print(data[i][j]+ ", ");
+				}
+				//System.out.println();
+				i++;			
+			}
+	    } catch (SQLException e){
+				 System.err.println("Blad");
+				e.printStackTrace();
+		}
 	}
 	
 }
