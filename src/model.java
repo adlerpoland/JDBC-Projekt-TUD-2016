@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.util.Scanner;
 
 public class model {
 	static java.sql.Statement stmt = null;
@@ -43,18 +44,8 @@ public class model {
 	static boolean init_database(){
 		view.print_out("Inicjacja danych...\n");
 		
-		//ADRES
-				String createDataAdres="CREATE TABLE IF NOT EXISTS Adres(id INTEGER PRIMARY KEY IDENTITY, ulica VARCHAR(30), numer INTEGER, miejscowosc VARCHAR(50),  kod VARCHAR(6), kraj VARCHAR(40))";
-				try {
-					stmt.execute(createDataAdres);
-				} catch (SQLException e) {
-					System.err.println("Blad przy tworzeniu tabeli Adres");
-					e.printStackTrace();
-					return false;
-				}
-					
 				//INTERWENCJA
-				String createDataInterwencja="CREATE TABLE IF NOT EXISTS Interwencja(id INTEGER PRIMARY KEY IDENTITY,Adres_id INTEGER REFERENCES Adres(id), data_interwencji DATE, rozpoczecie_interwencji TIME, zakonczenie_interwencji TIME, typ_interwencji VARCHAR(50), opis_zdarzenia VARCHAR(1000))";
+				String createDataInterwencja="CREATE TABLE IF NOT EXISTS Interwencja(id INTEGER PRIMARY KEY IDENTITY, data_interwencji DATE, miejscowosc VARCHAR(30), ulica VARCHAR(30), numer INTEGER, opis_zdarzenia VARCHAR(1000))";
 				try {
 					stmt.execute(createDataInterwencja);
 				} catch (SQLException e) {
@@ -72,18 +63,8 @@ public class model {
 			        e.printStackTrace();
 			        return false;
 			    }
-			    //Stanowisko
-			    String createDataStanowisko="CREATE TABLE IF NOT EXISTS Stanowisko(id INTEGER PRIMARY KEY IDENTITY,rodzaj VARCHAR(5),nazwa VARCHAR(100), maksymalny_stopien VARCHAR(50), staz INTEGER, pensja INTEGER)";
-			    try {
-			        stmt.execute(createDataStanowisko);
-			
-			    } catch (SQLException e) {
-			        System.err.println("Blad przy tworzeniu tabeli Stanowisko");
-			        e.printStackTrace();
-			        return false;
-			    }
 			    //Pracownik
-			    String createDataPracownik="CREATE TABLE IF NOT EXISTS Pracownik(id INTEGER PRIMARY KEY IDENTITY,Stanowisko_id INTEGER REFERENCES Stanowisko(id),Adres_id INTEGER REFERENCES Adres(id),Pojazd_id INTEGER REFERENCES Pojazd(id),imie VARCHAR(50), nazwisko VARCHAR(50), data_urodzenia DATE, numer_telefonu VARCHAR(9),data_zatrudnienia DATE)";
+			    String createDataPracownik="CREATE TABLE IF NOT EXISTS Pracownik(id INTEGER PRIMARY KEY IDENTITY,Pojazd_id INTEGER REFERENCES Pojazd(id),imie VARCHAR(50), nazwisko VARCHAR(50), data_urodzenia DATE, numer_telefonu VARCHAR(9),data_zatrudnienia DATE)";
 			    try {
 			        stmt.execute(createDataPracownik);
 			
@@ -105,15 +86,75 @@ public class model {
 			    return true;
 	}
 	
-	static void insert(int i){
+	static boolean db_execute(String cmd){
+		try {
+	        stmt.execute(cmd);
+	        //view.print_out("\n"+cmd);
+	        return true;
+	    } catch (SQLException e) {
+	        System.err.println("BLAD BAZY DANYCH");
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
+	
+	static void database_insert(int table,String data[]) throws IOException, InterruptedException
+	{
+		if(table==1){
+			//Interwencja
+			String cmd = String.format("INSERT INTO Interwencja (data_interwencji,miejscowosc,ulica,numer,opis_zdarzenia) Values ('%s','%s','%s','%s','%s')",data[1],data[2],data[3],data[4],data[5]);
+
+			if(model.db_execute(cmd)){
+				view.print_out("Poprawnie dodano interwencje\n");
+			}
+			else
+			{
+				view.print_out("Blad bazy danych!\n");
+			}
+		}
+		
+	}
+	
+	static void insert(int i) throws IOException, InterruptedException{
 		/*
 		1. Interwencje
 		2. Pracownicy
 		3. Pojazdy
 		*/
 		if(i==1){
-			view.print_out("Data: ");
+			//DATA, MIEJSCOWOSC, ULICA, NUMER, OPIS, DLUGOSC_INTERWENCJI
+			view.print_out("DATA\n");
+			String data[] = new String[10];
+			data[1] = read_string();
+			while(data[1].matches("^((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$")==false)
+			{
+				view.print_out("Niepoprawna data! YYYY-MM-DD\n");
+				data[1] = read_string();
+			}
 			
+			view.print_out("MIEJSCOWOSC\n");
+			data[2] = read_string(2,50);
+			while(data[2].matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
+			{
+				view.print_out("Niepoprawna miejscowoúÊ (Piszemy z duøej)\n");
+				data[2] = read_string(2,50);
+			}
+			
+			view.print_out("ULICA\n");
+			data[3] = read_string(3,30);
+			while(data[3].matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
+			{
+				view.print_out("Niepoprawna ulica (Piszemy z duøej)\n");
+				data[3] = read_string(2,50);
+			}
+			
+			view.print_out("NUMER\n");
+			data[4] = Integer.toString(read_int(0,99999));
+			
+			view.print_out("OPIS\n");
+			data[5] = read_string(10,255);
+			
+			database_insert(i,data);
 		}
 		else if(i==2){
 			
@@ -140,7 +181,10 @@ public class model {
         try{
             int i = Integer.parseInt(br.readLine());
             if(i<min || i>max)
+            {
+            	view.print_out("\nBlad! Dane sa z≥ej wielkoúci. MIN: "+min+" MAX: "+max+"\n");
             	return read_int(min,max);
+            }
             return i; 	
         }catch(NumberFormatException nfe){
             return read_int(min,max);
@@ -154,7 +198,10 @@ public class model {
             String i = br.readLine();
             int l = i.length();
             if(l<min || l>max)
-            	 return read_string(min,max);
+            {
+            	view.print_out("\nBlad! Dane sa z≥ej d≥ugoúci. MIN: "+min+" MAX: "+max+"\n");
+            	return read_string(min,max);
+            }
             else
             	return i; 	
         }catch(NumberFormatException nfe){
@@ -171,6 +218,14 @@ public class model {
         }catch(NumberFormatException nfe){
             return read_string();
         }
+	}
+	
+	static void ok_continue(){
+		@SuppressWarnings("resource")
+		Scanner s=new Scanner(System.in);
+        System.out.println("Kliknij enter by kontynuowac.....");
+        s.nextLine();
+        //s.close();
 	}
 	
 	public static int get_table_rows(String name){
@@ -225,6 +280,7 @@ public class model {
 					data[i][j] = result.getString(j);
 					System.out.print(data[i][j]+ ", ");
 				}
+				System.out.print("\n");
 				//System.out.println();
 				i++;			
 			}

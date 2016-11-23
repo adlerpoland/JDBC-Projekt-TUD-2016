@@ -48,6 +48,9 @@ public class controller {
 			else
 			{	
 				model.print_Table(x);
+				model.ok_continue();
+				menu();
+				
 			}
 		}
 		else if(i==2){
@@ -59,6 +62,8 @@ public class controller {
 			else
 			{	
 				model.insert(x);
+				model.ok_continue();
+				menu();
 			}
 		}
 		else if(i==3){
