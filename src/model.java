@@ -105,35 +105,71 @@ public class model {
 			    return true;
 	}
 	
-	static int read_choice() throws IOException{
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+	static void insert(int i){
+		/*
+		1. Interwencje
+		2. Pracownicy
+		3. Pojazdy
+		*/
+		if(i==1){
+			view.print_out("Data: ");
+			
+		}
+		else if(i==2){
+			
+		}
+		else if(i==3){
+			
+		}
+	}
+	
+	static int read_int() throws IOException{
 		view.print_out("Twoj wybor: ");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         try{
             int i = Integer.parseInt(br.readLine());
-            return i;
+            return i; 	
         }catch(NumberFormatException nfe){
-            System.err.println("Nieprawidlowy wybor!");
-            return 0;
+            return read_int();
         }
 	}
 	
-	static int ask_table() throws IOException, InterruptedException{
+	static int read_int(int min,int max) throws IOException{
 		view.print_out("Twoj wybor: ");
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         try{
             int i = Integer.parseInt(br.readLine());
-            if(i>=1 && i <=4)
-            	return i;
-            else{
-            	view.print_tables();
-            	return ask_table();
-            }
-            	
+            if(i<min || i>max)
+            	return read_int(min,max);
+            return i; 	
         }catch(NumberFormatException nfe){
-            //System.err.println("Nieprawidlowy wybor!");
-            //Thread.sleep(1000);
-            view.print_tables();
-            return ask_table();
+            return read_int(min,max);
+        }
+	}
+	
+	static String read_string(int min,int max) throws IOException{
+		view.print_out("Wprowadz dane: ");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        try{
+            String i = br.readLine();
+            int l = i.length();
+            if(l<min || l>max)
+            	 return read_string(min,max);
+            else
+            	return i; 	
+        }catch(NumberFormatException nfe){
+            return read_string(min,max);
+        }
+	}
+	
+	static String read_string() throws IOException{
+		view.print_out("Wprowadz dane: ");
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+        try{
+            String i = br.readLine();
+            return i; 	
+        }catch(NumberFormatException nfe){
+            return read_string();
         }
 	}
 	

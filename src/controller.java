@@ -15,7 +15,7 @@ public class controller {
 	
 	static void menu() throws IOException, InterruptedException{
 		view.print_menu();
-		int i = model.read_choice();
+		int i = model.read_int();
 		if(choice_check(i)){
 			view.clear_console();
 			execute_choice(i);
@@ -41,11 +41,25 @@ public class controller {
 		 */
 		if(i==1){
 			view.print_tables();
-			int x = model.ask_table();
-			model.print_Table(x);
+			int x = model.read_int(1,4);
+			if(x==4){	
+				menu();
+			}
+			else
+			{	
+				model.print_Table(x);
+			}
 		}
 		else if(i==2){
 			view.print_tables();
+			int x = model.read_int(1,4);
+			if(x==4){
+				menu();
+			}
+			else
+			{	
+				model.insert(x);
+			}
 		}
 		else if(i==3){
 			view.print_tables();
