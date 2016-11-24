@@ -29,7 +29,8 @@ public class view {
 		print_out("1. Interwencje\n");
 		print_out("2. Pracownicy\n");
 		print_out("3. Pojazdy\n");
-		print_out("4. Wróæ\n");
+		print_out("4. Pracownicy na Interwencji\n");
+		print_out("5. Wróæ\n");
 		print_out(" \n");
 
 	}
