@@ -153,16 +153,28 @@ public class model {
 		}
 		else if(table==4){
 			//Interwencja_has_Pracownik(Interwencja_id INTEGER REFERENCES Interwencja(id), Pracownik_id INTEGER REFERENCES Pracownik(id)
-			String cmd = String.format("INSERT INTO Interwencja_has_Pracownik (Interwencja_id,Pracownik_id) Values ('%s','%s')",data[1],data[2]);
-
-			if(model.db_execute(cmd)){
-				view.print_out("Poprawnie dodano pracownika do interwencji\n");
-				return true;
+			
+			//CHECK IF EXISTS
+			//ID = data[2]
+			
+			if(id_check(table,data[1],data[2]))
+			{
+				view.print_out("Pracownik jest ju¿ przypisany do tej interwencji!\n");
+				return false;
 			}
 			else
 			{
-				view.print_out("Blad bazy danych Mo¿liwe z³e ID\n");
-				return false;
+				String cmd = String.format("INSERT INTO Interwencja_has_Pracownik (Interwencja_id,Pracownik_id) Values ('%s','%s')",data[1],data[2]);
+	
+				if(model.db_execute(cmd)){
+					view.print_out("Poprawnie dodano pracownika do interwencji\n");
+					return true;
+				}
+				else
+				{
+					view.print_out("Blad bazy danych Mo¿liwe z³e ID\n");
+					return false;
+				}
 			}
 		}
 		return false;
@@ -172,7 +184,7 @@ public class model {
 		//INTERWENCJA
 		if(i==1){
 			String cmd = "DELETE FROM INTERWENCJA WHERE id="+id;
-			boolean result = db_executeTF(cmd);
+			boolean result = db_execute(cmd);
 			if(result==true)
 				view.print_out("Poprawnie usuniêto rekord!\n");
 			else
@@ -181,7 +193,7 @@ public class model {
 		//PRACOWNIK
 		else if(i==2){
 			String cmd = "DELETE FROM PRACOWNIK WHERE id="+id;
-			boolean result = db_executeTF(cmd);
+			boolean result = db_execute(cmd);
 			if(result==true)
 				view.print_out("Poprawnie usuniêto rekord!\n");
 			else
@@ -190,7 +202,7 @@ public class model {
 		//POJAZD
 		else if(i==3){
 			String cmd = "DELETE FROM POJAZD WHERE id="+id;
-			boolean result = db_executeTF(cmd);
+			boolean result = db_execute(cmd);
 			if(result==true)
 				view.print_out("Poprawnie usuniêto rekord!\n");
 			else
@@ -206,6 +218,77 @@ public class model {
 				view.print_out("Poprawnie usuniêto rekord!\n");
 			else
 				view.print_out("NIEPOPRAWNE ID\n");
+		}
+	}
+	
+	static void database_update(int i,int id,String s,String set){
+		String c = "";
+		if(i==1){
+			c="INTERWENCJA";
+		}
+		else if(i==2){
+			c="PRACOWNIK";
+		}
+		else if(i==3){
+			c="POJAZD";
+		}
+		
+		String cmd = "UPDATE "+c+" SET "+s+"='"+set+"' WHERE id="+id;
+		db_execute(cmd);
+		view.print_out("Poprawnie zaktualizowano rekord!\n");
+	}
+	
+	static boolean id_check(int i,int id){
+		String c = "";
+		if(i==1){
+			c="INTERWENCJA";
+		}
+		else if(i==2){
+			c="PRACOWNIK";
+		}
+		else if(i==3){
+			c="POJAZD";
+		}
+		String cmd = "SELECT TOP 1 1 FROM "+c+" WHERE id = "+id;
+		
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				return true;		
+			}
+			return false;
+		} catch (SQLException e){
+		   	System.err.println("BLAD PODCZAS POBIERANIA DANYCH");
+			return false;
+		}
+	}
+	
+	static boolean id_check(int i,String id,String id2){
+		String c = "";
+		if(i==4){
+			c="INTERWENCJA_HAS_PRACOWNIK";
+		}
+		String cmd = "SELECT TOP 1 1 FROM "+c+" WHERE INTERWENCJA_ID = "+id+" AND PRACOWNIK_ID = "+id2;
+		
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				return true;		
+			}
+			return false;
+		} catch (SQLException e){
+		   	System.err.println("BLAD PODCZAS POBIERANIA DANYCH");
+			return false;
 		}
 	}
 	
@@ -348,6 +431,10 @@ public class model {
 			
 			view.print_out("ID POJAZDU\n");
 			data[1] = Integer.toString(read_int(0,99999999)); //Pojazd_id
+			while(id_check(3,Integer.parseInt(data[1]))==false){
+				view.print_out("ZLE ID\n");
+				data[1] = Integer.toString(read_int(0,99999999));
+			}
 			data[2] = get_name();
 			data[3] = get_surname();
 			data[4] = get_date("URODZENIA");
@@ -384,10 +471,20 @@ public class model {
 			String data[] = new String[10];
 			
 			view.print_out("ID INTERWENCJI\n");
-			data[1] = Integer.toString(read_int(0,9999999));
+			
+			int x = read_int(0,9999999);
+			while(id_check(1,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,99999999);
+			}
+			data[1] = Integer.toString(x);
+			
 			view.print_out("ID PRACOWNIKA\n");
 			data[2] = Integer.toString(read_int(0,9999999));
-			
+			while(id_check(2,Integer.parseInt(data[2]))==false){
+				view.print_out("ZLE ID\n");
+				data[2] = Integer.toString(read_int(0,99999999));
+			}
 			database_insert(i,data);
 			ok_continue();
 			controller.menu();
@@ -403,7 +500,11 @@ public class model {
 		if(i==1){
 			//INTERWENCJE	
 			view.print_out("ID INTERWENCJI DO USUNIECIA\n");
-			int x = read_int(0,9999999);			
+			int x = read_int(0,9999999);
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,9999999);
+			}
 			database_delete(i,x);
 			ok_continue();
 			controller.menu();
@@ -411,7 +512,11 @@ public class model {
 		else if(i==2){
 			//PRACOWNICY	
 			view.print_out("ID PRACOWNIKA DO USUNIECIA\n");
-			int x = read_int(0,9999999);			
+			int x = read_int(0,9999999);
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,9999999);
+			}
 			database_delete(i,x);
 			ok_continue();
 			controller.menu();
@@ -419,7 +524,11 @@ public class model {
 		else if(i==3){
 			//POJAZDY
 			view.print_out("ID POJAZDU DO USUNIECIA\n");
-			int x = read_int(0,9999999);			
+			int x = read_int(0,9999999);	
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,9999999);
+			}
 			database_delete(i,x);
 			ok_continue();
 			controller.menu();
@@ -428,12 +537,214 @@ public class model {
 			//Interwencja has Pracownik
 			view.print_out("ID INTERWENCJI\n");
 			int x = read_int(0,9999999);
+			while(id_check(1,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,9999999);
+			}
 			view.print_out("ID PRACOWNIKA\n");
 			int x2 = read_int(0,9999999);
+			while(id_check(2,x2)==false){
+				view.print_out("ZLE ID\n");
+				x2 = read_int(0,9999999);
+			}
 			database_delete(i,x,x2);
 			ok_continue();
 			controller.menu();
 		}
+	}
+	
+	static void update(int i) throws IOException, InterruptedException{
+		if(i==1){
+			//INTERWENCJE
+			view.print_out("Podaj ID Interwencji\n");
+			int x = read_int(0,999999);
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,999999);
+			}
+			print_TableHeaders("INTERWENCJA");
+			print_single("INTERWENCJA",x);
+			view.print_out("Podaj nazwe kolumny, któr¹ chcesz zmodyfikowac (NIE MO¯NA MODYFIKOWAC ID)\n");	
+			while(true){
+				String s = read_string(3,30);
+				if(s.equalsIgnoreCase("DATA_INTERWENCJI")){
+					view.print_out("NOWA ");
+					String update = get_date("INTERWENCJI");
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("MIEJSCOWOSC")){
+					view.print_out("NOWA ");
+					String update = get_city();
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("ULICA")){
+					view.print_out("NOWA ");
+					String update = get_street();
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("NUMER")){
+					view.print_out("NOWY ");	
+					String update = Integer.toString(read_int(0,99999));
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("OPIS_ZDARZENIA")){
+					view.print_out("NOWY ");
+					String update = read_string(10,255);
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else{
+					view.print_out("Nie ma takiej kolumny\n");
+				}
+			}
+		}
+		else if(i==2){
+			//PRACOWNICY
+			view.print_out("Podaj ID Pracownika\n");
+			int x = read_int(0,999999);
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,999999);
+			}
+			print_TableHeaders("PRACOWNIK");
+			print_single("PRACOWNIK",x);
+			view.print_out("Podaj nazwe kolumny, któr¹ chcesz zmodyfikowac (NIE MO¯NA MODYFIKOWAC ID)\n");	
+			while(true){
+				String s = read_string(3,30);
+				if(s.equalsIgnoreCase("POJAZD_ID")){
+					String update = Integer.toString(read_int(0,99999999)); //Pojazd_id
+					while(id_check(3,Integer.parseInt(update))==false){
+						view.print_out("ZLE ID\n");
+						update = Integer.toString(read_int(0,99999999));
+					}
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("IMIE")){		
+					view.print_out("NOWE ");
+					String update = get_name();
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("NAZWISKO")){
+					view.print_out("NOWE ");
+					String update = get_surname();
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("DATA_URODZENIA")){
+					view.print_out("NOWA ");
+					String update = get_date("URODZENIA");
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("NUMER_TELEFONU")){
+					view.print_out("NOWY ");
+					String update = get_phone();
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("DATA_ZATRUDNIENIA")){
+					view.print_out("NOWA ");
+					String update = get_date("ZATRUDNIENIA");
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else{
+					view.print_out("Nie ma takiej kolumny\n");
+				}
+			}
+		}
+		else if(i==3){
+			//POJAZDY
+			view.print_out("Podaj ID Pojazdu\n");
+			int x = read_int(0,999999);
+			while(id_check(i,x)==false){
+				view.print_out("ZLE ID\n");
+				x = read_int(0,999999);
+			}
+			print_TableHeaders("POJAZD");
+			print_single("POJAZD",x);
+			view.print_out("Podaj nazwe kolumny, któr¹ chcesz zmodyfikowac (NIE MO¯NA MODYFIKOWAC ID)\n");	
+			while(true){
+				String s = read_string(3,30);
+				if(s.equalsIgnoreCase("MARKA")){
+					view.print_out("NOWA MARKA\n");		
+					String update = read_string(1,30);
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("MODEL")){
+					view.print_out("NOWY MODEL\n");
+					String update = read_string(1,30);
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("DATA_PRODUKCJI")){
+					view.print_out("NOWA ");
+					String update =get_date("PRODUKCJI");
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("PRZEBIEG")){
+					view.print_out("NOWY PRZEBIEG\n");	
+					String update = Integer.toString(read_int(0,9999999));
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else if(s.equalsIgnoreCase("WARTOSC")){
+					view.print_out("NOWA WARTOSC\n");
+					String update = Integer.toString(read_int(0,9999999));
+					database_update(i,x,s,update);
+					ok_continue();
+					controller.menu();
+					break;
+				}
+				else{
+					view.print_out("Nie ma takiej kolumny\n");
+				}
+			}
+		}
+		else if(i==4){
+			//PRACOWNICY NA INTERWENCJI
+			view.print_out("NIE MO¯NA MODYFIKOWAC PRACOWNIKOW PRZYPISANYCH DO INTERWENCJI\n");
+		}
+		controller.menu();
+		
 	}
 	
 	static int read_int() throws IOException{
@@ -552,7 +863,11 @@ public class model {
 			if(z==2)
 			{
 				view.print_out("ID Interwencji\n");
-				y = model.read_int(0,999999);
+				y = model.read_int(0,99999999);
+				while(id_check(1,y)==false){
+					view.print_out("ZLE ID\n");
+					y = read_int(0,99999999);
+				}
 			}
 		}
 		else if(x==5){
@@ -610,4 +925,27 @@ public class model {
 		}
 	}
 	
+	static void print_single(String x, int id){
+		String cmd = "SELECT * FROM "+x+" WHERE id="+id;
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			ResultSetMetaData rsmd = result.getMetaData();
+			int numberOfColumns = rsmd.getColumnCount();
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				for(int j=1;j<=numberOfColumns;j++){
+					System.out.print(result.getString(j)+ ", ");
+				}
+				System.out.print("\n");		
+			}
+			System.out.print("\n");
+		} catch (SQLException e){
+		   	System.err.println("BLAD PODCZAS POBIERANIA DANYCH");
+			//e.printStackTrace();
+		}
+	}
 }

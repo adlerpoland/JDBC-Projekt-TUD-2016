@@ -37,12 +37,14 @@ public class controller {
 		1. Wyswietl tabele
 		2. Dodaj dane
 		3. Zmodyfikuj dane
-		4. Usun dane
-		 */
+		4. Pracownicy na interwencji
+		5. Usun dane
+		*/
 		if(i==1){
+			//WYSWIETL
 			view.print_tables();
-			int x = model.read_int(1,4);
-			if(x==4){	
+			int x = model.read_int(1,5);
+			if(x==5){	
 				menu();
 			}
 			else
@@ -54,23 +56,40 @@ public class controller {
 			}
 		}
 		else if(i==2){
+			//DODAJ
 			view.print_tables();
-			int x = model.read_int(1,4);
-			if(x==4){
+			int x = model.read_int(1,5);
+			if(x==5){
 				menu();
 			}
 			else
 			{	
 				model.insert(x);
-				model.ok_continue();
-				menu();
 			}
 		}
 		else if(i==3){
+			//ZMODYFIKUJ
 			view.print_tables();
+			int x = model.read_int(1,5);
+			if(x==5){
+				menu();
+			}
+			else
+			{	
+				model.update(x);
+			}
 		}
 		else if(i==4){
+			//USUN
 			view.print_tables();
+			int x = model.read_int(1,5);
+			if(x==5){
+				menu();
+			}
+			else
+			{	
+				model.delete(x);
+			}
 		}
 	}
 }
