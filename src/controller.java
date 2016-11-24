@@ -15,7 +15,7 @@ public class controller {
 	
 	static void menu() throws IOException, InterruptedException{
 		view.print_menu();
-		int i = model.read_int();
+		int i = model.read_int(1,5);
 		if(choice_check(i)){
 			view.clear_console();
 			execute_choice(i);

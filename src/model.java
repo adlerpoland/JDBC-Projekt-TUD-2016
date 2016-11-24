@@ -54,7 +54,7 @@ public class model {
 					return false;
 				}
 				//POJAZD
-			    String createDataPojazd="CREATE TABLE IF NOT EXISTS Pojazd(id INTEGER PRIMARY KEY IDENTITY, marka VARCHAR(30),model VARCHAR(30), data_produkcji DATE, przebieg REAL, wartosc INTEGER)";
+			    String createDataPojazd="CREATE TABLE IF NOT EXISTS Pojazd(id INTEGER PRIMARY KEY IDENTITY, marka VARCHAR(30),model VARCHAR(30), data_produkcji DATE, przebieg INTEGER, wartosc INTEGER)";
 			    try {
 			        stmt.execute(createDataPojazd);
 			
@@ -98,7 +98,7 @@ public class model {
 	    }
 	}
 	
-	static void database_insert(int table,String data[]) throws IOException, InterruptedException
+	static boolean database_insert(int table,String data[]) throws IOException, InterruptedException
 	{
 		if(table==1){
 			//Interwencja
@@ -106,13 +106,124 @@ public class model {
 
 			if(model.db_execute(cmd)){
 				view.print_out("Poprawnie dodano interwencje\n");
+				return true;
 			}
 			else
 			{
 				view.print_out("Blad bazy danych!\n");
+				return false;
 			}
 		}
+		else if(table==2){
+			//Pracownik
+			String cmd = String.format("INSERT INTO Pracownik (Pojazd_id,imie,nazwisko,data_urodzenia,numer_telefonu,data_zatrudnienia) Values ('%s','%s','%s','%s','%s','%s')",data[1],data[2],data[3],data[4],data[5],data[6]);
+			if(model.db_execute(cmd)){
+				view.print_out("Poprawnie dodano pracownika\n");
+				return true;
+			}
+			else
+			{
+				view.print_out("Blad bazy danych!\n");
+				return false;
+			}
+		}
+		else if(table==3){
+			//Pojazd
+			String cmd = String.format("INSERT INTO Pojazd (marka,model,data_produkcji,przebieg,wartosc) Values ('%s','%s','%s','%s','%s')",data[1],data[2],data[3],data[4],data[5]);
+
+			if(model.db_execute(cmd)){
+				view.print_out("Poprawnie dodano pojazd\n");
+				return true;
+			}
+			else
+			{
+				view.print_out("Blad bazy danych!\n");
+				return false;
+			}
+		}
+		return false;
+	}
+	
+	
+	static String get_date() throws IOException{
+		view.print_out("DATA\n");
+		String s = read_string();
 		
+		while(s.matches("^((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$")==false)
+		{
+			view.print_out("Niepoprawna data! YYYY-MM-DD\n");
+			s = get_date();
+		}
+		return s;
+	}
+	
+	static String get_date(String optional) throws IOException{
+		view.print_out("DATA "+optional+"\n");
+		String s = read_string();
+		
+		while(s.matches("^((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$")==false)
+		{
+			view.print_out("Niepoprawna data! YYYY-MM-DD\n");
+			s = get_date();
+		}
+		return s;
+	}
+	
+	static String get_city() throws IOException{
+		view.print_out("MIEJSCOWOSC\n");
+		String s = read_string(2,50);
+		
+		while(s.matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
+		{
+			view.print_out("Niepoprawna miejscowoúÊ (Piszemy z duøej)\n");
+			s = read_string(2,50);
+		}
+		return s;
+	}
+	
+	static String get_street() throws IOException{
+		view.print_out("ULICA\n");
+		String s = read_string(3,30);
+		
+		while(s.matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
+		{
+			view.print_out("Niepoprawna ulica (Piszemy z duøej)\n");
+			s = read_string(2,50);
+		}
+		return s;
+	}
+	
+	static String get_name() throws IOException{
+		view.print_out("IMIE\n");
+		String s = read_string(3,50);
+		while(s.matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)$")==false)
+		{
+			view.print_out("Niepoprawne imie (Piszemy z duøej)\n");
+			s = read_string(3,50);
+		}
+		return s;
+	}
+	
+	static String get_surname() throws IOException{
+		view.print_out("NAZWISKO\n");
+		String s = read_string(2,50);
+		while(s.matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)$")==false)
+		{
+			view.print_out("Niepoprawne nazwisko (Piszemy z duøej)\n");
+			s = read_string(2,50);
+		}
+		return s;
+	}
+	
+	static String get_phone() throws IOException{
+		view.print_out("NUMER TELEFONU\n");
+		String s = read_string(9,9);
+		while(s.matches("^([1-9][0-9]{8})$")==false)
+		{
+			view.print_out("Niepoprawny numer! Tylko 9 cyfr! ");
+			s = read_string(9,9);
+		}
+		return s;
 	}
 	
 	static void insert(int i) throws IOException, InterruptedException{
@@ -122,32 +233,13 @@ public class model {
 		3. Pojazdy
 		*/
 		if(i==1){
+			//INTERWENCJE
 			//DATA, MIEJSCOWOSC, ULICA, NUMER, OPIS, DLUGOSC_INTERWENCJI
-			view.print_out("DATA\n");
 			String data[] = new String[10];
-			data[1] = read_string();
-			while(data[1].matches("^((19|20)\\d\\d)-(0?[1-9]|1[012])-(0?[1-9]|[12][0-9]|3[01])$")==false)
-			{
-				view.print_out("Niepoprawna data! YYYY-MM-DD\n");
-				data[1] = read_string();
-			}
 			
-			view.print_out("MIEJSCOWOSC\n");
-			data[2] = read_string(2,50);
-			while(data[2].matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
-			{
-				view.print_out("Niepoprawna miejscowoúÊ (Piszemy z duøej)\n");
-				data[2] = read_string(2,50);
-			}
-			
-			view.print_out("ULICA\n");
-			data[3] = read_string(3,30);
-			while(data[3].matches("^([A-Z-Øè∆•å £”—][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*(([ ][A-Za-zøüÊÒÛ≥ÍπúØè∆•å £”—]*)?)*)$")==false)
-			{
-				view.print_out("Niepoprawna ulica (Piszemy z duøej)\n");
-				data[3] = read_string(2,50);
-			}
-			
+			data[1] = get_date();		
+			data[2] = get_city();	
+			data[3] = get_street();	
 			view.print_out("NUMER\n");
 			data[4] = Integer.toString(read_int(0,99999));
 			
@@ -155,12 +247,45 @@ public class model {
 			data[5] = read_string(10,255);
 			
 			database_insert(i,data);
+			ok_continue();
+			controller.menu();
 		}
 		else if(i==2){
+			//PRACOWNICY
+			//Pojazd_id,imie,nazwisko,data_urodzenia,numer_telefonu,data_zatrudnienia
 			
+			String data[] = new String[10];
+			
+			view.print_out("ID POJAZDU\n");
+			data[1] = Integer.toString(read_int(0,99999999)); //Pojazd_id
+			data[2] = get_name();
+			data[3] = get_surname();
+			data[4] = get_date("URODZENIA");
+			data[5] = get_phone();
+			data[6] = get_date("ZATRUDNIENIA");
+			
+			database_insert(i,data);
+			ok_continue();
+			controller.menu();
 		}
 		else if(i==3){
+			//POJAZDY
+			//marka VARCHAR(30),model VARCHAR(30), data_produkcji DATE, przebieg REAL, wartosc INTEGER
 			
+			String data[] = new String[10];
+			view.print_out("MARKA\n");
+			data[1] = read_string(1,30);
+			view.print_out("MODEL\n");
+			data[2] = read_string(1,30);
+			data[3] = get_date("PRODUKCJI");
+			view.print_out("PRZEBIEG\n");
+			data[4] = Integer.toString(read_int(0,9999999));
+			view.print_out("WARTOSC\n");
+			data[5] = Integer.toString(read_int(0,9999999));
+			
+			database_insert(i,data);
+			ok_continue();
+			controller.menu();
 		}
 	}
 	

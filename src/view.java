@@ -17,6 +17,7 @@ public class view {
 		print_out("2. Dodaj dane\n");
 		print_out("3. Zmodyfikuj dane\n");
 		print_out("4. Usun dane\n");
+		print_out("5. Wyjdz\n");
 		print_out(" \n");
 	}
 	
