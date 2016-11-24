@@ -27,7 +27,7 @@ public class model {
 	    catch (ClassNotFoundException e) 
 	    {
 			System.err.println("Brak sterownika JDBC");
-			e.printStackTrace();
+			//e.printStackTrace();
 		}
 	    
 	    //Connect
@@ -36,7 +36,7 @@ public class model {
 			   stmt = conn.createStatement();
 		} catch (SQLException e) {
 					System.err.println("Problem z otwarciem po³¹czenia");
-					e.printStackTrace();
+					//e.printStackTrace();
 		}      
 	    return true;
 	}
@@ -50,7 +50,7 @@ public class model {
 					stmt.execute(createDataInterwencja);
 				} catch (SQLException e) {
 					System.err.println("Blad przy tworzeniu tabeli Interwencja");
-					e.printStackTrace();
+					//e.printStackTrace();
 					return false;
 				}
 				//POJAZD
@@ -60,7 +60,7 @@ public class model {
 			
 			    } catch (SQLException e) {
 			        System.err.println("Blad przy tworzeniu tabeli Pojazd");
-			        e.printStackTrace();
+			        //e.printStackTrace();
 			        return false;
 			    }
 			    //Pracownik
@@ -70,7 +70,7 @@ public class model {
 			
 			    } catch (SQLException e) {
 			        System.err.println("Blad przy tworzeniu tabeli Pracownik");
-			        e.printStackTrace();
+			       // e.printStackTrace();
 			        return false;
 			    }
 			    //INTERWENCJA HAS PRACOWNIK
@@ -80,7 +80,7 @@ public class model {
 			
 			    } catch (SQLException e) {
 			        System.err.println("Blad przy tworzeniu tabeli Interwencja has Pracownik");
-			        e.printStackTrace();
+			        //e.printStackTrace();
 			        return false;
 			    }
 			    return true;
@@ -89,11 +89,21 @@ public class model {
 	static boolean db_execute(String cmd){
 		try {
 	        stmt.execute(cmd);
-	        //view.print_out("\n"+cmd);
 	        return true;
 	    } catch (SQLException e) {
 	        System.err.println("BLAD BAZY DANYCH");
-	        e.printStackTrace();
+	        //e.printStackTrace();
+	        return false;
+	    }
+	}
+	
+	static boolean db_executeTF(String cmd){
+		try {
+	        boolean result = stmt.execute(cmd);
+	        return result;
+	    } catch (SQLException e) {
+	        System.err.println("BLAD BAZY DANYCH");
+	        //e.printStackTrace();
 	        return false;
 	    }
 	}
@@ -123,7 +133,7 @@ public class model {
 			}
 			else
 			{
-				view.print_out("Blad bazy danych!\n");
+				view.print_out("Blad bazy danych! Mo¿liwe z³e ID pojazdu\n");
 				return false;
 			}
 		}
@@ -141,9 +151,89 @@ public class model {
 				return false;
 			}
 		}
+		else if(table==4){
+			//Interwencja_has_Pracownik(Interwencja_id INTEGER REFERENCES Interwencja(id), Pracownik_id INTEGER REFERENCES Pracownik(id)
+			String cmd = String.format("INSERT INTO Interwencja_has_Pracownik (Interwencja_id,Pracownik_id) Values ('%s','%s')",data[1],data[2]);
+
+			if(model.db_execute(cmd)){
+				view.print_out("Poprawnie dodano pracownika do interwencji\n");
+				return true;
+			}
+			else
+			{
+				view.print_out("Blad bazy danych Mo¿liwe z³e ID\n");
+				return false;
+			}
+		}
 		return false;
 	}
 	
+	static void database_delete(int i, int id){
+		//INTERWENCJA
+		if(i==1){
+			String cmd = "DELETE FROM INTERWENCJA WHERE id="+id;
+			boolean result = db_executeTF(cmd);
+			if(result==true)
+				view.print_out("Poprawnie usuniêto rekord!\n");
+			else
+				view.print_out("NIEPOPRAWNE ID LUB INTERWENCJA MA PRZYPISANYCH PRACOWNIKOW\n");
+		}
+		//PRACOWNIK
+		else if(i==2){
+			String cmd = "DELETE FROM PRACOWNIK WHERE id="+id;
+			boolean result = db_executeTF(cmd);
+			if(result==true)
+				view.print_out("Poprawnie usuniêto rekord!\n");
+			else
+				view.print_out("NIEPOPRAWNE ID LUB PRACOWNIK PRZYPISANY JEST DO INTERWENCJI\n");
+		}
+		//POJAZD
+		else if(i==3){
+			String cmd = "DELETE FROM POJAZD WHERE id="+id;
+			boolean result = db_executeTF(cmd);
+			if(result==true)
+				view.print_out("Poprawnie usuniêto rekord!\n");
+			else
+				view.print_out("NIEPOPRAWNE ID LUB POJAZD NADAL MA PRACOWNIKOW\n");
+		}
+	}
+	
+	static void database_delete(int i, int id, int id2){
+		if(i==4){
+			String cmd = "DELETE FROM Interwencja_has_Pracownik WHERE Interwencja_id="+id2+" and Pracownik_id="+id;
+			boolean result = db_executeTF(cmd);
+			if(result==true)
+				view.print_out("Poprawnie usuniêto rekord!\n");
+			else
+				view.print_out("NIEPOPRAWNE ID\n");
+		}
+	}
+	
+	static String get_workerINFO(int id){
+		String cmd = "SELECT id,imie,nazwisko FROM PRACOWNIK WHERE id="+id;
+		String rtrn = "| ID Pracownika = ";
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			ResultSetMetaData rsmd = result.getMetaData();
+			int numberOfColumns = rsmd.getColumnCount();
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				for(int j=1;j<=numberOfColumns;j++){
+					//System.out.print(result.getString(j)+ ", ");
+					rtrn = rtrn + result.getString(j)+ ", ";
+				}
+			}
+			return rtrn;
+	    } catch (SQLException e){
+				 System.err.println("Blad");
+				//e.printStackTrace();
+			return "BLAD";
+		}
+	}
 	
 	static String get_date() throws IOException{
 		view.print_out("DATA\n");
@@ -287,6 +377,63 @@ public class model {
 			ok_continue();
 			controller.menu();
 		}
+		else if(i==4){
+			//Interwencja has Pracownicy
+			//Interwencja_has_Pracownik(Interwencja_id INTEGER REFERENCES Interwencja(id), Pracownik_id INTEGER REFERENCES Pracownik(id)
+			
+			String data[] = new String[10];
+			
+			view.print_out("ID INTERWENCJI\n");
+			data[1] = Integer.toString(read_int(0,9999999));
+			view.print_out("ID PRACOWNIKA\n");
+			data[2] = Integer.toString(read_int(0,9999999));
+			
+			database_insert(i,data);
+			ok_continue();
+			controller.menu();
+		}
+	}
+	
+	static void delete(int i) throws IOException, InterruptedException{
+		/*
+		1. Interwencje
+		2. Pracownicy
+		3. Pojazdy
+		*/
+		if(i==1){
+			//INTERWENCJE	
+			view.print_out("ID INTERWENCJI DO USUNIECIA\n");
+			int x = read_int(0,9999999);			
+			database_delete(i,x);
+			ok_continue();
+			controller.menu();
+		}
+		else if(i==2){
+			//PRACOWNICY	
+			view.print_out("ID PRACOWNIKA DO USUNIECIA\n");
+			int x = read_int(0,9999999);			
+			database_delete(i,x);
+			ok_continue();
+			controller.menu();
+		}
+		else if(i==3){
+			//POJAZDY
+			view.print_out("ID POJAZDU DO USUNIECIA\n");
+			int x = read_int(0,9999999);			
+			database_delete(i,x);
+			ok_continue();
+			controller.menu();
+		}
+		else if(i==4){
+			//Interwencja has Pracownik
+			view.print_out("ID INTERWENCJI\n");
+			int x = read_int(0,9999999);
+			view.print_out("ID PRACOWNIKA\n");
+			int x2 = read_int(0,9999999);
+			database_delete(i,x,x2);
+			ok_continue();
+			controller.menu();
+		}
 	}
 	
 	static int read_int() throws IOException{
@@ -361,29 +508,67 @@ public class model {
 			return result.getInt(1);
 	    } catch (SQLException e){
 	    	System.err.println("Blad: "+cmd);
-			e.printStackTrace();
+			//e.printStackTrace();
 			return 0;
+		}
+	}
+	
+	public static void print_TableHeaders(String name){
+		String cmd = "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = '"+name+"'";
+		try{
+			ResultSet result = stmt.executeQuery(cmd);
+			while(result.next())
+			{
+				if(result.isClosed())
+				{
+					break;
+				}			
+				System.out.print(result.getString(1)+",");			
+			}
+			System.out.print("\n");
+		} catch (SQLException e){
+		   	System.err.println("BLAD PODCZAS POBIERANIA NAZW KOLUMN");
+			//e.printStackTrace();
 		}
 	}
 	
 	static void print_Table(int x) throws IOException, InterruptedException{
 		String c = "";
+		int y = -1;
 		if(x==1){
-			c="Interwencja";
+			c="INTERWENCJA";
 		}
 		else if(x==2){
-			c="Pracownik";
+			c="PRACOWNIK";
 		}
 		else if(x==3){
-			c="Pojazd";
+			c="POJAZD";
 		}
 		else if(x==4){
+			c="Interwencja_has_Pracownik";
+			view.print_out("1. Wyswietl ca³¹ tabele\n");
+			view.print_out("2. Wyswietl po ID interwencji\n");
+			int z = model.read_int(1,2);
+			if(z==2)
+			{
+				view.print_out("ID Interwencji\n");
+				y = model.read_int(0,999999);
+			}
+		}
+		else if(x==5){
 			view.clear_console();
 			controller.menu();
 		}
 		
+		print_TableHeaders(c);
+		
 		
 		String cmd = "SELECT * FROM "+c;
+		if(y!=-1)
+		{
+			cmd = "SELECT * FROM "+c+" WHERE Interwencja_id = "+y;
+		}
+		
 		int i = 1;
 		int rows = get_table_rows(c);
 		try{
@@ -393,7 +578,7 @@ public class model {
 			//System.out.println("ROWS: "+rows+" Columns: "+numberOfColumns);
 			String[][] data = new String[rows+2][numberOfColumns+1];
 			data[0][0] = Integer.toString(rows);
-			data[0][1] = Integer.toString(numberOfColumns);			
+			data[0][1] = Integer.toString(numberOfColumns);
 			while(result.next())
 			{
 				if(result.isClosed())
@@ -402,8 +587,18 @@ public class model {
 				}			
 				//System.out.print("Dane: ");
 				for(int j=1;j<=numberOfColumns;j++){
+					if(x==4 && j==2)
+					{
+						view.print_out(get_workerINFO(result.getInt(j)));
+					}
+					else if(x==4 && j==1){
+						System.out.print("ID Interwencji = "+result.getString(j)+ " ");
+					}
+					else
+					{
 					data[i][j] = result.getString(j);
 					System.out.print(data[i][j]+ ", ");
+					}
 				}
 				System.out.print("\n");
 				//System.out.println();
@@ -411,7 +606,7 @@ public class model {
 			}
 	    } catch (SQLException e){
 				 System.err.println("Blad");
-				e.printStackTrace();
+				//e.printStackTrace();
 		}
 	}
 	
